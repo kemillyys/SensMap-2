@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SensMap Protótipo</title>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.2.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --p1:#006378;--p2:#01abcf;--p3:#55c5dd;--p4:#002730;--p5:#cfe6eb;
+  --white:#fff;--surface:#f2fafc;--card:#fff;--border:#cce4ec;
+  --text:#002730;--muted:#3a6070;--lm:#7aacba;
+  --danger:#e05252;--success:#28a87a;--warning:#e09a2a;
+  --fh:'Exo 2',sans-serif;--fb:'DM Sans',sans-serif;
+  --r:14px;--rs:9px;
+  --sh:0 2px 12px rgba(0,99,120,.10);--shd:0 6px 28px rgba(0,99,120,.15)
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:linear-gradient(135deg,#d0eaf2 0%,#e8f5f9 100%);display:flex;justify-content:center;padding:24px 16px 48px;min-height:100vh;font-family:var(--fb)}
+
+/* ── DEVICE ── */
+.device{width:375px;min-height:820px;background:var(--surface);border-radius:44px;overflow:hidden;box-shadow:0 32px 80px rgba(0,39,48,.22),inset 0 0 0 1px rgba(255,255,255,.6);position:relative;display:flex;flex-direction:column}
+.notch{background:var(--p4);height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.notch span{color:rgba(255,255,255,.9);font-size:12px;font-weight:500;font-family:var(--fh)}
+.notch .ni{display:flex;gap:5px;align-items:center}
+.nd{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.7)}
+
+/* ── SCREENS ── */
+.screen{display:none;flex-direction:column;flex:1;overflow:hidden;animation:si .22s ease both}
+.screen.active{display:flex}
+@keyframes si{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.sa{flex:1;overflow-y:auto;overflow-x:hidden}.sa::-webkit-scrollbar{display:none}
+
+/* ── BOTTOM NAV ── */
+.bnav{background:var(--white);border-top:1px solid var(--border);display:flex;padding:8px 0 14px;flex-shrink:0}
+.ni2{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0;transition:all .2s}
+.ni2 i{font-size:20px;color:var(--lm);transition:color .2s}
+.ni2 span{font-size:10px;font-weight:600;color:var(--lm);font-family:var(--fh);transition:color .2s}
+.ni2.act i,.ni2.act span{color:var(--p1)}
+
+/* ── COLLAPSING HEADER SYSTEM ── 
+   .big-hdr  = decorative hero (scrolls away)
+   .mini-bar = sticky residue (sticks at top: 0 after hero scrolls off)
+*/
+.big-hdr{position:relative;overflow:hidden}
+.big-hdr::after{content:'';position:absolute;right:-40px;top:-40px;width:190px;height:190px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none}
+.big-hdr::before{content:'';position:absolute;left:-30px;bottom:-40px;width:150px;height:150px;border-radius:50%;background:rgba(1,171,207,.12);pointer-events:none}
+.mini-bar{
+  position:sticky;top:0;z-index:20;
+  height:46px;display:flex;align-items:center;padding:0 18px;gap:10px;
+  background:var(--p4);
+}
+.mini-bar .mb-logo{display:flex;align-items:center;gap:8px;flex:1}
+.mini-bar .mb-icon{width:26px;height:26px;background:rgba(255,255,255,.15);border-radius:50% 50% 50% 5px;display:flex;align-items:center;justify-content:center}
+.mini-bar .mb-icon i{font-size:13px;color:var(--white)}
+.mini-bar .mb-name{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--white);letter-spacing:.08em}
+.mini-bar .mb-back{width:30px;height:30px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.mini-bar .mb-back i{font-size:15px;color:var(--white)}
+.mini-bar .mb-title{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--white);flex:1}
+.mini-bar .mb-action{width:30px;height:30px;background:rgba(255,255,255,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.mini-bar .mb-action i{font-size:15px;color:var(--white)}
+/* gradient variants */
+.mini-bar.grad-auth{background:var(--p4)}
+.mini-bar.grad-home{background:var(--p4)}
+.mini-bar.grad-detail{background:var(--p4)}
+.mini-bar.grad-profile{background:var(--p4)}
+
+/* ── HERO INNER (decorative content of header) ── */
+.hi-auth{padding:28px 22px 24px;position:relative;z-index:1}
+.hi-home{padding:14px 18px 22px;position:relative;z-index:1}
+.hi-detail{height:170px;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.hi-profile{padding:22px 18px 28px;text-align:center;position:relative;z-index:1}
+.hi-eval{padding:14px 18px 18px;position:relative;z-index:1}
+.hi-admin{padding:14px 18px 18px;position:relative;z-index:1}
+
+/* ── SHARED AUTH STYLES ── */
+.al{display:flex;align-items:center;gap:9px;margin-bottom:18px}
+.ali{width:30px;height:30px;background:rgba(255,255,255,.15);border-radius:50% 50% 50% 6px;display:flex;align-items:center;justify-content:center}
+.ali i{font-size:15px;color:var(--white)}
+.aln{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--white);letter-spacing:.1em}
+.ah-title{font-family:var(--fh);font-size:22px;font-weight:700;color:var(--white);line-height:1.2}
+.ah-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:3px}
+.ab{padding:22px 22px 28px;background:var(--white)}
+.fl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;font-family:var(--fh)}
+.fw{position:relative;margin-bottom:13px}
+.fi2{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--lm)}
+.fi{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs);padding:11px 12px 11px 38px;font-size:14px;color:var(--text);font-family:var(--fb);transition:all .2s;outline:none}
+.fi:focus{border-color:var(--p2);background:var(--white);box-shadow:0 0 0 3px rgba(1,171,207,.1)}
+.fi.er{border-color:var(--danger)}.fi.ok{border-color:var(--success)}
+.fe{font-size:11px;color:var(--danger);margin-top:-9px;margin-bottom:10px;display:none;font-weight:500}
+.fe.sh{display:block}
+.fok{font-size:11px;color:var(--success);margin-top:-9px;margin-bottom:10px;display:none;font-weight:500}
+.fok.sh{display:block}
+.btn{width:100%;background:var(--p1);color:var(--white);border:none;border-radius:var(--rs);padding:13px;font-size:14px;font-weight:700;font-family:var(--fh);cursor:pointer;transition:all .2s;letter-spacing:.02em;margin-top:4px}
+.btn:hover{background:var(--p2)}.btn:active{transform:scale(.98)}
+.btn.sec{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.btn.sec:hover{border-color:var(--p2);color:var(--p1)}
+.btn.dng{background:var(--danger)}
+.afoot{text-align:center;margin-top:16px;font-size:13px;color:var(--muted)}
+.afoot a{color:var(--p1);font-weight:600;cursor:pointer;text-decoration:none}
+.fgt{text-align:right;margin-bottom:14px}
+.fgt a{font-size:12px;color:var(--p1);font-weight:500;cursor:pointer}
+.div{display:flex;align-items:center;gap:10px;margin:16px 0}
+.div::before,.div::after{content:'';flex:1;height:1px;background:var(--border)}
+.div span{font-size:11px;color:var(--lm);font-weight:500}
+.rsel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.rc{border:1.5px solid var(--border);border-radius:var(--rs);padding:13px 10px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface)}
+.rc.sel{border-color:var(--p1);background:rgba(0,99,120,.05)}
+.rc i{font-size:22px;color:var(--lm);display:block;margin-bottom:5px;transition:color .2s}
+.rc span{font-size:12px;font-weight:700;color:var(--muted);font-family:var(--fh);transition:color .2s}
+.rc.sel i,.rc.sel span{color:var(--p1)}
+.sb{background:rgba(40,168,122,.09);border:1px solid rgba(40,168,122,.28);border-radius:var(--rs);padding:11px 13px;display:none;align-items:center;gap:9px;margin-bottom:14px}
+.sb.sh{display:flex}.sb i{color:var(--success);font-size:17px;flex-shrink:0}.sb p{font-size:12px;color:var(--success);font-weight:600;line-height:1.4}
+.eb{background:rgba(224,82,82,.07);border:1px solid rgba(224,82,82,.22);border-radius:var(--rs);padding:11px 13px;display:none;align-items:center;gap:9px;margin-bottom:14px}
+.eb.sh{display:flex}.eb i{color:var(--danger);font-size:17px;flex-shrink:0}.eb p{font-size:12px;color:var(--danger);font-weight:600}
+.ps{display:flex;gap:4px;margin-top:5px;margin-bottom:10px}
+.pb{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s}
+.demo-hint{font-size:11px;color:var(--lm);text-align:center;margin-top:12px;line-height:1.6;background:var(--surface);border-radius:var(--rs);padding:10px}
+
+/* ── HOME ── */
+.hh-inner{position:relative;z-index:1}
+.ht{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.hg{font-family:var(--fh);font-size:17px;font-weight:700;color:var(--white);line-height:1.25}
+.hg span{display:block;font-size:11px;color:rgba(255,255,255,.55);font-weight:400;margin-bottom:1px}
+.av{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.av i{font-size:18px;color:var(--white)}
+.sbar{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.14);border-radius:var(--rs);padding:9px 13px}
+.sbar i{font-size:15px;color:rgba(255,255,255,.65)}
+.sbar input{background:transparent;border:none;outline:none;font-size:13px;color:var(--white);font-family:var(--fb);flex:1;width:100%}
+.sbar input::placeholder{color:rgba(255,255,255,.5)}
+.sh2{display:flex;justify-content:space-between;align-items:center;padding:15px 18px 8px}
+.st{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--text)}
+.sl{font-size:12px;color:var(--p1);font-weight:600;cursor:pointer}
+.cr{display:flex;gap:7px;padding:0 18px 4px;overflow-x:auto;scrollbar-width:none}
+.cr::-webkit-scrollbar{display:none}
+.ch{flex-shrink:0;background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;font-family:var(--fh);white-space:nowrap}
+.ch.act{background:var(--p1);border-color:var(--p1);color:var(--white)}
+.pcr{display:flex;gap:13px;padding:0 18px 4px;overflow-x:auto;scrollbar-width:none}
+.pcr::-webkit-scrollbar{display:none}
+.pc{flex-shrink:0;width:210px;background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;cursor:pointer;transition:all .2s}
+.pc:hover{transform:translateY(-2px);box-shadow:var(--shd)}
+.ci{height:105px;background:linear-gradient(135deg,var(--p5),var(--p3));position:relative;display:flex;align-items:center;justify-content:center}
+.ci i{font-size:38px;color:rgba(0,99,120,.28)}
+.cbg{position:absolute;top:7px;right:7px;color:var(--white);font-size:10px;font-weight:700;border-radius:5px;padding:2px 7px;font-family:var(--fh)}
+.cbg.g{background:var(--success)}.cbg.b{background:var(--p1)}.cbg.a{background:var(--warning)}
+.cb{padding:11px}
+.cn{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.ca{font-size:10px;color:var(--lm);margin-bottom:7px;display:flex;align-items:center;gap:3px}
+.ca i{font-size:11px}
+.sr{display:flex;gap:5px;flex-wrap:wrap}
+.sp{display:flex;align-items:center;gap:3px;border-radius:5px;padding:3px 6px;font-size:10px;font-weight:700;font-family:var(--fh)}
+.sp.low{background:#e6f8f2;color:#15704a}.sp.low i{color:var(--success)}
+.sp.med{background:#fff7e0;color:#6b4d00}.sp.med i{color:var(--warning)}
+.sp.hi{background:#fdf0f0;color:#7a1f1f}.sp.hi i{color:var(--danger)}
+.sp i{font-size:11px}
+.pli{display:flex;gap:12px;align-items:center;background:var(--card);border-radius:var(--r);margin:0 18px 9px;padding:13px;box-shadow:var(--sh);cursor:pointer;transition:all .2s}
+.pli:hover{transform:translateX(2px)}
+.plib{width:50px;height:50px;border-radius:9px;background:linear-gradient(135deg,var(--p5),var(--p3));display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.plib i{font-size:24px;color:rgba(0,99,120,.38)}
+.plii{flex:1}
+.plin{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--text);margin-bottom:1px}
+.plic{font-size:11px;color:var(--lm);margin-bottom:5px}
+.str{display:flex;gap:2px;align-items:center}
+.str i{font-size:11px;color:#ddd}.str i.f{color:#f5a623}
+.str span{font-size:11px;color:var(--muted);margin-left:3px;font-weight:600}
+.plim{font-size:11px;color:var(--success);font-weight:800;font-family:var(--fh)}
+.sug{margin:0 18px 14px;border-radius:var(--r);background:linear-gradient(135deg,var(--p1),var(--p2));padding:14px;display:flex;gap:12px;align-items:center;cursor:pointer}
+.sugi{width:42px;height:42px;background:rgba(255,255,255,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sugi i{font-size:21px;color:var(--white)}
+.sugt .s1{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--white);margin-bottom:2px}
+.sugt .s2{font-size:11px;color:rgba(255,255,255,.65);line-height:1.4}
+
+/* ── DETAIL ── */
+.dh-bg{position:absolute;inset:0;background:linear-gradient(160deg,var(--p4),var(--p1) 60%,var(--p3));z-index:0}
+.dh-icon{font-size:68px;color:rgba(255,255,255,.18);position:relative;z-index:1}
+.dsc{position:absolute;bottom:-17px;right:18px;background:var(--white);border-radius:11px;padding:7px 13px;box-shadow:var(--shd);text-align:center;z-index:5}
+.dsc .dn{font-family:var(--fh);font-size:21px;font-weight:800;color:var(--p1);line-height:1}
+.dsc .dl{font-size:10px;color:var(--lm);font-weight:500}
+.dfv{position:absolute;top:8px;right:8px;width:32px;height:32px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5}
+.dfv i{font-size:16px;color:var(--white)}
+.db{padding:26px 18px 18px}
+.dname{font-family:var(--fh);font-size:21px;font-weight:800;color:var(--text);margin-bottom:4px}
+.dcat{display:flex;align-items:center;gap:5px;margin-bottom:12px}
+.dcat i{font-size:13px;color:var(--lm)}.dcat span{font-size:12px;color:var(--muted)}
+.sbig{display:flex;gap:3px;align-items:center;margin-bottom:4px}
+.sbig i{font-size:17px;color:#ddd}.sbig i.f{color:#f5a623}
+.sbig span{font-size:11px;color:var(--muted);margin-left:4px}
+.sg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin:14px 0}
+.sc{background:var(--surface);border-radius:var(--rs);padding:11px 7px;text-align:center;border:1px solid var(--border)}
+.sc i{font-size:21px;color:var(--p2);margin-bottom:5px;display:block}
+.sc .scl{font-size:9px;color:var(--muted);font-weight:700;font-family:var(--fh);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.lvb{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.lf2{height:100%;border-radius:3px}
+.lf2.low{background:var(--success);width:22%}.lf2.med{background:var(--warning);width:52%}.lf2.hi{background:var(--danger);width:83%}
+.lt{font-size:10px;font-weight:800;margin-top:3px;font-family:var(--fh)}
+.lt.low{color:var(--success)}.lt.med{color:var(--warning)}.lt.hi{color:var(--danger)}
+.dd{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.tw{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.tg{background:var(--p5);color:var(--p1);border-radius:20px;padding:4px 11px;font-size:10px;font-weight:700;font-family:var(--fh)}
+.ri{background:var(--card);border-radius:var(--rs);padding:13px;margin-bottom:9px;box-shadow:var(--sh)}
+.rit{display:flex;justify-content:space-between;margin-bottom:5px;align-items:flex-start}
+.riu{font-size:13px;font-weight:700;color:var(--text);font-family:var(--fh)}
+.rid{font-size:11px;color:var(--lm)}
+.rix{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ── EVAL ── */
+.eht{display:flex;align-items:center;gap:11px}
+.etl{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--white)}
+.epc{background:rgba(255,255,255,.11);border-radius:var(--rs);padding:11px;display:flex;gap:11px;align-items:center;margin-top:14px}
+.epci{width:40px;height:40px;background:rgba(255,255,255,.14);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.epci i{font-size:19px;color:var(--white)}
+.epcn{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--white)}
+.epcc{font-size:11px;color:rgba(255,255,255,.55)}
+.ebo{padding:18px}
+.es{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:var(--sh)}
+.est{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.est i{font-size:15px;color:var(--p2)}
+.ss{display:flex;gap:8px;justify-content:center;padding:2px 0 6px}
+.ss i{font-size:30px;color:#ddd;cursor:pointer;transition:all .2s}
+.ss i.sel{color:#f5a623}.ss i:hover{color:#f5a623;transform:scale(1.1)}
+.ls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.lo{border:1.5px solid var(--border);border-radius:8px;padding:11px 7px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface)}
+.lo i{font-size:19px;display:block;margin-bottom:3px;color:var(--lm)}
+.lo span{font-size:11px;font-weight:700;color:var(--muted);font-family:var(--fh)}
+.lo.sl-low{border-color:var(--success);background:rgba(40,168,122,.07)}.lo.sl-low i,.lo.sl-low span{color:var(--success)}
+.lo.sl-med{border-color:var(--warning);background:rgba(224,154,42,.07)}.lo.sl-med i,.lo.sl-med span{color:var(--warning)}
+.lo.sl-hi{border-color:var(--danger);background:rgba(224,82,82,.07)}.lo.sl-hi i,.lo.sl-hi span{color:var(--danger)}
+.cf{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:11px;font-size:13px;color:var(--text);font-family:var(--fb);resize:none;outline:none;background:var(--surface);line-height:1.5}
+.cf:focus{border-color:var(--p2);background:var(--white)}
+
+/* ── PROFILE ── */
+.paw{position:relative;display:inline-block;margin-bottom:10px}
+.pav{width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.18);border:3px solid rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;margin:0 auto}
+.pav i{font-size:38px;color:var(--white)}
+.peb{position:absolute;bottom:0;right:0;width:24px;height:24px;background:var(--p2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--white)}
+.peb i{font-size:12px;color:var(--white)}
+.pnm{font-family:var(--fh);font-size:19px;font-weight:700;color:var(--white);margin-bottom:2px}
+.pem{font-size:12px;color:rgba(255,255,255,.6)}
+.pbg{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:3px 11px;margin-top:7px}
+.pbg i{font-size:11px;color:var(--p3)}.pbg span{font-size:10px;color:var(--white);font-weight:700;font-family:var(--fh);letter-spacing:.04em}
+.str2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border)}
+.sti{background:var(--white);padding:13px 7px;text-align:center}
+.stn{font-family:var(--fh);font-size:19px;font-weight:800;color:var(--p1)}
+.stl{font-size:10px;color:var(--muted);font-weight:500;margin-top:1px}
+.ms{padding:14px 18px 2px}
+.mst{font-size:10px;font-weight:700;color:var(--lm);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;font-family:var(--fh)}
+.mi{display:flex;align-items:center;gap:12px;padding:13px;background:var(--card);border-radius:var(--rs);margin-bottom:7px;cursor:pointer;transition:all .2s}
+.mi:hover{background:var(--surface)}
+.mii{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mii.cy{background:rgba(0,99,120,.09)}.mii.cy i{color:var(--p1)}
+.mii.tl{background:rgba(1,171,207,.09)}.mii.tl i{color:var(--p2)}
+.mii.rd{background:rgba(224,82,82,.09)}.mii.rd i{color:var(--danger)}
+.mii i{font-size:17px}
+.mit{flex:1}
+.mit .m1{font-size:13px;font-weight:700;color:var(--text);font-family:var(--fh)}
+.mit .m2{font-size:11px;color:var(--lm);margin-top:1px}
+.mia i{font-size:15px;color:var(--border)}
+
+/* ── ADMIN ── */
+.adht{display:flex;justify-content:space-between;align-items:center}
+.adtl{font-family:var(--fh);font-size:17px;font-weight:700;color:var(--white)}
+.adsl{font-size:12px;color:rgba(255,255,255,.55);margin-top:2px}
+.adbg{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:4px 11px;font-size:10px;color:var(--white);font-weight:700;font-family:var(--fh)}
+.sg2{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:14px 18px}
+.scc{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--sh);display:flex;align-items:center;gap:11px}
+.sci{width:42px;height:42px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sci.cy{background:rgba(0,99,120,.09)}.sci.cy i{color:var(--p1)}
+.sci.tl{background:rgba(1,171,207,.09)}.sci.tl i{color:var(--p2)}
+.sci.gn{background:rgba(40,168,122,.09)}.sci.gn i{color:var(--success)}
+.sci.am{background:rgba(224,154,42,.09)}.sci.am i{color:var(--warning)}
+.sci i{font-size:21px}
+.scin .sn{font-family:var(--fh);font-size:21px;font-weight:800;color:var(--text)}
+.scin .ss2{font-size:10px;color:var(--muted);margin-top:1px}
+.at{margin:0 18px 14px;background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.ath{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+.atl{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--text)}
+.ata{font-size:12px;color:var(--p1);font-weight:600;cursor:pointer}
+.atr{display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--surface)}
+.atr:last-child{border-bottom:none}
+.atic{width:34px;height:34px;border-radius:7px;background:var(--p5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.atic i{font-size:16px;color:var(--p1)}
+.ati{flex:1}
+.atn{font-size:13px;font-weight:700;color:var(--text);font-family:var(--fh)}
+.atm{font-size:10px;color:var(--lm)}
+.atac{display:flex;gap:5px}
+.atb{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;transition:opacity .2s}
+.atb.ed{background:rgba(1,171,207,.1)}.atb.ed i{font-size:13px;color:var(--p1)}
+.atb.dl{background:rgba(224,82,82,.1)}.atb.dl i{font-size:13px;color:var(--danger)}
+.atb:hover{opacity:.7}
+.cbr{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.cbl{font-size:11px;font-weight:700;color:var(--muted);width:68px;font-family:var(--fh);flex-shrink:0}
+.cbw{flex:1;height:7px;background:var(--surface);border-radius:4px;overflow:hidden}
+.cbf{height:100%;border-radius:4px;background:var(--p2)}
+.cbv{font-size:11px;font-weight:700;color:var(--p1);width:26px;text-align:right;font-family:var(--fh)}
+
+/* ── ONBOARDING ── */
+.onb-steps{display:flex;align-items:center;margin-bottom:14px}
+.ostep{width:26px;height:26px;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--fh)}
+.ostep.done{background:rgba(255,255,255,.9);color:var(--p1)}
+.ostep.cur{background:var(--white);color:var(--p1)}
+.ostep.nxt{background:rgba(255,255,255,.2);color:rgba(255,255,255,.6);border:1.5px solid rgba(255,255,255,.3)}
+.oline{flex:1;height:1.5px}
+.oline.done{background:rgba(255,255,255,.7)}
+.oline.nxt{background:rgba(255,255,255,.25)}
+.perm-section-title{font-size:10px;font-weight:700;color:var(--lm);letter-spacing:.09em;text-transform:uppercase;margin-bottom:10px;font-family:var(--fh)}
+.pcard{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:13px;display:flex;align-items:flex-start;gap:12px;margin-bottom:9px;transition:border-color .2s}
+.pcard.on{border-color:var(--p1);background:rgba(0,99,120,.03)}
+.pcard-icon{width:38px;height:38px;border-radius:9px;background:var(--p5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pcard-icon i{font-size:19px;color:var(--p1)}
+.pcard-body{flex:1}
+.pcard-name{font-size:13px;font-weight:700;color:var(--text);font-family:var(--fh);margin-bottom:2px}
+.pcard-desc{font-size:11px;color:var(--lm);line-height:1.4}
+.badge-req{background:var(--p5);color:var(--p1);font-size:9px;font-weight:700;border-radius:4px;padding:2px 5px;margin-left:5px;letter-spacing:.03em;font-family:var(--fh)}
+.tog{width:40px;height:22px;border-radius:11px;position:relative;flex-shrink:0;margin-top:2px;cursor:pointer;transition:background .2s}
+.tog.on{background:var(--p1)}.tog.off{background:var(--border)}
+.tog::after{content:'';position:absolute;top:3px;width:16px;height:16px;background:var(--white);border-radius:50%;transition:left .2s}
+.tog.on::after{left:21px}.tog.off::after{left:3px}
+.sens-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:13px;margin-bottom:9px}
+.sens-card-top{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.sens-card-top i{font-size:18px;color:var(--p2)}
+.sens-card-name{font-size:13px;font-weight:700;color:var(--text);font-family:var(--fh)}
+.tag-opts{display:flex;gap:7px}
+.topt{flex:1;border:1.5px solid var(--border);border-radius:20px;padding:7px 6px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;font-family:var(--fh);transition:all .2s;background:var(--surface)}
+.topt.act{background:var(--p1);border-color:var(--p1);color:var(--white)}
+.onb-nav{display:flex;gap:10px;margin-top:6px}
+.btn-back{flex:0;background:transparent;border:1.5px solid var(--border);border-radius:var(--rs);padding:12px 16px;font-size:13px;color:var(--muted);font-family:var(--fh);font-weight:600;cursor:pointer;transition:all .2s}
+.btn-back:hover{border-color:var(--p2);color:var(--p1)}
+.btn-next{flex:1;background:var(--p2);border:none;border-radius:var(--rs);padding:13px;font-size:14px;font-weight:700;color:var(--white);font-family:var(--fh);cursor:pointer;transition:all .2s}
+.btn-next:hover{background:var(--p1)}.btn-next:active{transform:scale(.98)}
+
+/* ── MODAL ── */
+.mo{position:absolute;inset:0;background:rgba(0,39,48,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:22px}
+.mo.op{display:flex}
+.md{background:var(--white);border-radius:18px;padding:22px;width:100%;max-width:310px}
+.mdi{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.mdi.sc{background:rgba(40,168,122,.1)}.mdi.sc i{font-size:27px;color:var(--success)}
+.mdi.wn{background:rgba(224,154,42,.1)}.mdi.wn i{font-size:27px;color:var(--warning)}
+.mdi.dg{background:rgba(224,82,82,.1)}.mdi.dg i{font-size:27px;color:var(--danger)}
+.mdt{font-family:var(--fh);font-size:17px;font-weight:700;color:var(--text);text-align:center;margin-bottom:7px}
+.mdd{font-size:12px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:18px}
+.mac{display:flex;gap:9px}
+.mac .btn{margin-top:0}
+
+/* ── LOADING ── */
+.lov{position:absolute;inset:0;background:rgba(255,255,255,.82);display:none;align-items:center;justify-content:center;z-index:50;flex-direction:column;gap:11px}
+.lov.sh{display:flex}
+.sp2{width:34px;height:34px;border:3px solid var(--p5);border-top-color:var(--p1);border-radius:50%;animation:sp .75s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.lt2{font-size:13px;color:var(--muted);font-weight:600;font-family:var(--fh)}
+
+/* ── SPLASH ── */
+#splash{background:linear-gradient(155deg,var(--p4) 0%,var(--p1) 55%,var(--p2) 100%);align-items:center;justify-content:center}
+.spl{display:flex;flex-direction:column;align-items:center;gap:16px;animation:fu .8s ease both}
+.sp-pin{width:88px;height:88px;background:rgba(255,255,255,.12);border-radius:50% 50% 50% 14px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.2)}
+.sp-pin i{font-size:44px;color:var(--white)}
+.sp-name{font-family:var(--fh);font-size:32px;font-weight:800;color:var(--white);letter-spacing:.07em}
+.sp-tag{font-size:12px;color:rgba(255,255,255,.6);letter-spacing:.15em;text-transform:uppercase}
+.sp-ld{position:absolute;bottom:80px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.lb{width:100px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden}
+.lf{height:100%;width:0;background:var(--p3);border-radius:2px;animation:ld 2s ease forwards}
+.sp-hint{font-size:11px;color:rgba(255,255,255,.4);font-family:var(--fh)}
+@keyframes ld{to{width:100%}}
+@keyframes fu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="device">
+<div class="notch"><span>9:41</span><div class="ni"><div class="nd"></div><div class="nd"></div><div class="nd"></div></div></div>
+
+<!-- SPLASH -->
+<div class="screen active" id="splash" style="display:flex">
+  <div class="spl">
+    <div class="sp-pin"><i class="ti ti-map-pin"></i></div>
+    <div class="sp-name">SENSMAP</div>
+    <div class="sp-tag">Sensory Guidance</div>
+  </div>
+  <div class="sp-ld"><div class="lb"><div class="lf"></div></div><div class="sp-hint">Carregando...</div></div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="login" style="background:var(--white)">
+<div class="sa">
+  <!-- BIG HERO -->
+  <div class="big-hdr" style="background:linear-gradient(135deg,var(--p4) 0%,var(--p1) 100%)">
+    <div class="hi-auth">
+      <div class="al"><div class="ali"><i class="ti ti-map-pin"></i></div><div class="aln">SENSMAP</div></div>
+      <div class="ah-title">Bem-vindo de volta</div>
+      <div class="ah-sub">Acesse sua conta para continuar</div>
+    </div>
+    <!-- MINI BAR — sticks at top after hero scrolls off -->
+    <div class="mini-bar grad-auth">
+      <div class="mb-logo">
+        <div class="mb-icon"><i class="ti ti-map-pin"></i></div>
+        <div class="mb-name">SENSMAP</div>
+      </div>
+    </div>
+  </div>
+  <!-- CONTENT -->
+  <div class="ab">
+    <div class="eb" id="lerr"><i class="ti ti-alert-circle"></i><p>E-mail ou senha incorretos.</p></div>
+    <div class="fl">E-mail</div>
+    <div class="fw"><i class="ti ti-mail fi2"></i><input class="fi" id="lemail" type="email" placeholder="seu@email.com"></div>
+    <div class="fl">Senha</div>
+    <div class="fw"><i class="ti ti-lock fi2"></i><input class="fi" id="lpwd" type="password" placeholder="••••••••"></div>
+    <div class="fgt"><a onclick="sm('mfgt')">Esqueci minha senha</a></div>
+    <button class="btn" onclick="doLogin()">Entrar</button>
+    <div class="div"><span>ou</span></div>
+    <div class="afoot">Não tem conta? <a onclick="goTo('cad')">Criar conta</a></div>
+    <div class="demo-hint"><strong>Demo —</strong> admin@sensmap.com / admin123 (admin)<br>user@sensmap.com / user123 (usuário)</div>
+  </div>
+</div>
+<div class="lov" id="lload"><div class="sp2"></div><div class="lt2">Autenticando...</div></div>
+</div>
+
+<!-- CADASTRO -->
+<div class="screen" id="cad" style="background:var(--white)">
+<div class="sa">
+  <div class="big-hdr" style="background:linear-gradient(135deg,var(--p4) 0%,var(--p1) 100%)">
+    <div class="hi-auth">
+      <div class="al"><div class="ali"><i class="ti ti-map-pin"></i></div><div class="aln">SENSMAP</div></div>
+      <div class="ah-title">Criar conta</div>
+      <div class="ah-sub">Comece sua jornada sensorial</div>
+    </div>
+    <div class="mini-bar grad-auth">
+      <div class="mb-logo">
+        <div class="mb-icon"><i class="ti ti-map-pin"></i></div>
+        <div class="mb-name">SENSMAP</div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,.55);font-family:var(--fh);font-weight:500">Criar conta</div>
+    </div>
+  </div>
+  <div class="ab">
+    <div class="sb" id="csuc"><i class="ti ti-circle-check"></i><p>Conta criada! Redirecionando...</p></div>
+    <div class="fl">Tipo de conta</div>
+    <div class="rsel">
+      <div class="rc sel" id="ru" onclick="selRole('user')"><i class="ti ti-user"></i><span>Usuário</span></div>
+      <div class="rc" id="ra" onclick="selRole('admin')"><i class="ti ti-shield-check"></i><span>Administrador</span></div>
+    </div>
+    <div class="fl">Nome completo</div>
+    <div class="fw"><i class="ti ti-user fi2"></i><input class="fi" id="cname" type="text" placeholder="Seu nome completo"></div>
+    <div class="fe" id="ename">Nome é obrigatório</div>
+    <div class="fl">E-mail</div>
+    <div class="fw"><i class="ti ti-mail fi2"></i><input class="fi" id="cemail" type="email" placeholder="seu@email.com" oninput="vEmail()"></div>
+    <div class="fe" id="eemail">E-mail inválido</div>
+    <div class="fok" id="oemail">✓ E-mail válido</div>
+    <div class="fl">Senha</div>
+    <div class="fw"><i class="ti ti-lock fi2"></i><input class="fi" id="cpwd" type="password" placeholder="Mínimo 8 caracteres" oninput="vPwd()"></div>
+    <div class="ps"><div class="pb" id="pb1"></div><div class="pb" id="pb2"></div><div class="pb" id="pb3"></div><div class="pb" id="pb4"></div></div>
+    <div class="fe" id="epwd">Mínimo 8 caracteres</div>
+    <div class="fl">Confirmar senha</div>
+    <div class="fw"><i class="ti ti-lock-check fi2"></i><input class="fi" id="cpwd2" type="password" placeholder="Repita a senha" oninput="vPwd2()"></div>
+    <div class="fe" id="epwd2">Senhas não conferem</div>
+    <div class="fok" id="opwd2">✓ Senhas conferem</div>
+    <button class="btn" onclick="doCad()">Continuar</button>
+    <div class="afoot">Já tem conta? <a onclick="goTo('login')">Entrar</a></div>
+  </div>
+</div>
+<div class="lov" id="cload"><div class="sp2"></div><div class="lt2">Criando conta...</div></div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="screen" id="onboarding" style="background:var(--surface)">
+<div class="sa">
+  <div class="big-hdr" style="background:linear-gradient(135deg,var(--p4) 0%,var(--p1) 100%)">
+    <div class="hi-auth">
+      <div class="al"><div class="ali"><i class="ti ti-map-pin"></i></div><div class="aln">SENSMAP</div></div>
+      <div class="onb-steps">
+        <div class="ostep done"><i class="ti ti-check" style="font-size:11px"></i></div>
+        <div class="oline done"></div>
+        <div class="ostep done"><i class="ti ti-check" style="font-size:11px"></i></div>
+        <div class="oline done"></div>
+        <div class="ostep cur">3</div>
+      </div>
+      <div class="ah-title">Configure seu perfil</div>
+      <div class="ah-sub">Personalize para uma experiência sensorial ideal</div>
+    </div>
+    <div class="mini-bar grad-auth">
+      <div class="mb-logo">
+        <div class="mb-icon"><i class="ti ti-map-pin"></i></div>
+        <div class="mb-name">SENSMAP</div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,.55);font-family:var(--fh);font-weight:500">Passo 3 de 3</div>
+    </div>
+  </div>
+  <div style="padding:18px 18px 28px;background:var(--surface)">
+    <div class="perm-section-title">Permissões do app</div>
+    <div class="pcard on" id="pc-loc">
+      <div class="pcard-icon"><i class="ti ti-map-pin"></i></div>
+      <div class="pcard-body">
+        <div class="pcard-name">Localização <span class="badge-req">obrigatório</span></div>
+        <div class="pcard-desc">Para mostrar locais próximos e calcular sua compatibilidade sensorial</div>
+      </div>
+      <div class="tog on" id="tog-loc" onclick="togPerm('loc')"></div>
+    </div>
+    <div class="pcard" id="pc-notif">
+      <div class="pcard-icon"><i class="ti ti-bell"></i></div>
+      <div class="pcard-body">
+        <div class="pcard-name">Notificações</div>
+        <div class="pcard-desc">Alertas de locais com base nas suas preferências sensoriais</div>
+      </div>
+      <div class="tog off" id="tog-notif" onclick="togPerm('notif')"></div>
+    </div>
+    <div class="perm-section-title" style="margin-top:18px">Suas sensibilidades</div>
+    <div class="sens-card">
+      <div class="sens-card-top"><i class="ti ti-volume"></i><div class="sens-card-name">Tolerância a ruído</div></div>
+      <div class="tag-opts">
+        <div class="topt act" id="sn-low" onclick="selSens('n','low')">Baixo</div>
+        <div class="topt" id="sn-med" onclick="selSens('n','med')">Médio</div>
+        <div class="topt" id="sn-hi" onclick="selSens('n','hi')">Alto</div>
+      </div>
+    </div>
+    <div class="sens-card">
+      <div class="sens-card-top"><i class="ti ti-sun"></i><div class="sens-card-name">Iluminação preferida</div></div>
+      <div class="tag-opts">
+        <div class="topt" id="si-low" onclick="selSens('i','low')">Baixa</div>
+        <div class="topt act" id="si-med" onclick="selSens('i','med')">Média</div>
+        <div class="topt" id="si-hi" onclick="selSens('i','hi')">Alta</div>
+      </div>
+    </div>
+    <div class="sens-card">
+      <div class="sens-card-top"><i class="ti ti-users"></i><div class="sens-card-name">Lotação tolerada</div></div>
+      <div class="tag-opts">
+        <div class="topt act" id="sl-low" onclick="selSens('l','low')">Vazio</div>
+        <div class="topt" id="sl-med" onclick="selSens('l','med')">Moderado</div>
+        <div class="topt" id="sl-hi" onclick="selSens('l','hi')">Cheio</div>
+      </div>
+    </div>
+    <div class="onb-nav">
+      <button class="btn-back" onclick="goTo('cad')">Voltar</button>
+      <button class="btn-next" onclick="finishOnboarding()">Começar →</button>
+    </div>
+    <div style="height:20px"></div>
+  </div>
+</div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="home">
+<div class="sa">
+  <div class="big-hdr" style="background:linear-gradient(135deg,var(--p4),var(--p1))">
+    <div class="hi-home">
+      <div class="hh-inner">
+        <div class="ht">
+          <div class="hg"><span id="htime">Boa tarde</span><span id="huname">Ana 👋</span></div>
+          <div class="av" onclick="goTo('perfil')"><i class="ti ti-user"></i></div>
+        </div>
+        <div class="sbar"><i class="ti ti-search"></i><input type="text" placeholder="Buscar locais, categorias..."></div>
+      </div>
+    </div>
+    <div class="mini-bar grad-home">
+      <div class="mb-logo">
+        <div class="mb-icon"><i class="ti ti-map-pin"></i></div>
+        <div class="mb-name">SENSMAP</div>
+      </div>
+      <div class="mb-action"><i class="ti ti-search"></i></div>
+    </div>
+  </div>
+  <!-- CONTENT -->
+  <div class="sug" style="margin-top:14px" onclick="goTo('det')">
+    <div class="sugi"><i class="ti ti-sparkles"></i></div>
+    <div class="sugt"><div class="s1">Sugestão para você</div><div class="s2">Biblioteca Municipal — pouco movimento agora, iluminação suave</div></div>
+    <i class="ti ti-chevron-right" style="color:rgba(255,255,255,.55);font-size:17px"></i>
+  </div>
+  <div class="cr">
+    <div class="ch act">Todos</div><div class="ch">Cafés</div><div class="ch">Parques</div><div class="ch">Bibliotecas</div><div class="ch">Shoppings</div>
+  </div>
+  <div class="sh2"><div class="st">Locais em destaque</div><div class="sl">Ver todos</div></div>
+  <div class="pcr">
+    <div class="pc" onclick="goTo('det')">
+      <div class="ci"><i class="ti ti-building-community"></i><div class="cbg g">Tranquilo</div></div>
+      <div class="cb"><div class="cn">Café Aconchego</div><div class="ca"><i class="ti ti-map-pin"></i>Pinheiros, SP</div>
+      <div class="sr"><div class="sp low"><i class="ti ti-volume-3"></i>Baixo</div><div class="sp low"><i class="ti ti-sun"></i>Suave</div><div class="sp low"><i class="ti ti-users"></i>Vazio</div></div></div>
+    </div>
+    <div class="pc" onclick="goTo('det')">
+      <div class="ci"><i class="ti ti-trees"></i><div class="cbg g">Recomendado</div></div>
+      <div class="cb"><div class="cn">Parque Ibirapuera</div><div class="ca"><i class="ti ti-map-pin"></i>Vila Mariana, SP</div>
+      <div class="sr"><div class="sp low"><i class="ti ti-volume-3"></i>Baixo</div><div class="sp med"><i class="ti ti-sun"></i>Médio</div><div class="sp med"><i class="ti ti-users"></i>Moderado</div></div></div>
+    </div>
+    <div class="pc" onclick="goTo('det')">
+      <div class="ci"><i class="ti ti-book"></i><div class="cbg b">Favorito</div></div>
+      <div class="cb"><div class="cn">Biblioteca Mário de Andrade</div><div class="ca"><i class="ti ti-map-pin"></i>Centro, SP</div>
+      <div class="sr"><div class="sp low"><i class="ti ti-volume-3"></i>Silencioso</div><div class="sp low"><i class="ti ti-sun"></i>Baixo</div></div></div>
+    </div>
+  </div>
+  <div class="sh2" style="margin-top:10px"><div class="st">Perto de você</div><div class="sl">Mapa</div></div>
+  <div class="pli" onclick="goTo('det')">
+    <div class="plib"><i class="ti ti-coffee"></i></div>
+    <div class="plii"><div class="plin">Coffee Lab</div><div class="plic">Café · 0.3 km</div>
+    <div class="str"><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star"></i><span>4.2 (38)</span></div></div>
+    <div class="plim">96%</div>
+  </div>
+  <div class="pli" onclick="goTo('det')">
+    <div class="plib"><i class="ti ti-building"></i></div>
+    <div class="plii"><div class="plin">Coworking Silêncio</div><div class="plic">Trabalho · 0.7 km</div>
+    <div class="str"><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><span>4.9 (52)</span></div></div>
+    <div class="plim">89%</div>
+  </div>
+  <div class="pli" onclick="goTo('det')">
+    <div class="plib"><i class="ti ti-plant"></i></div>
+    <div class="plii"><div class="plin">Jardim Botânico</div><div class="plic">Parque · 1.2 km</div>
+    <div class="str"><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star"></i><span>4.5 (120)</span></div></div>
+    <div class="plim">81%</div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+<div class="bnav">
+  <div class="ni2 act" onclick="goTo('home')"><i class="ti ti-home"></i><span>Início</span></div>
+  <div class="ni2" onclick="goTo('home')"><i class="ti ti-map"></i><span>Mapa</span></div>
+  <div class="ni2" onclick="goTo('aval')"><i class="ti ti-star"></i><span>Avaliar</span></div>
+  <div class="ni2" onclick="goTo('perfil')"><i class="ti ti-user"></i><span>Perfil</span></div>
+</div>
+</div>
+
+<!-- DETALHE -->
+<div class="screen" id="det">
+<div class="sa">
+  <div class="big-hdr" style="background:transparent">
+    <div class="hi-detail" style="background:linear-gradient(160deg,var(--p4),var(--p1) 60%,var(--p3))">
+      <i class="ti ti-coffee dh-icon"></i>
+      <div class="dfv"><i class="ti ti-heart"></i></div>
+      <div class="dsc"><div class="dn">4.7</div><div class="dl">★ nota</div></div>
+    </div>
+    <div class="mini-bar grad-detail" style="background:var(--p1)">
+      <div class="mb-back" onclick="goBack()"><i class="ti ti-arrow-left"></i></div>
+      <div class="mb-title">Café Aconchego</div>
+      <div class="mb-action" onclick="goTo('aval')"><i class="ti ti-star"></i></div>
+    </div>
+  </div>
+  <div class="db">
+    <div class="dname">Café Aconchego</div>
+    <div class="dcat"><i class="ti ti-map-pin"></i><span>Rua dos Pinheiros, 450 · Pinheiros · 0.3 km</span></div>
+    <div class="sbig"><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><span>4.7 · 62 avaliações</span></div>
+    <div class="sg">
+      <div class="sc"><i class="ti ti-volume-3"></i><div class="scl">Ruído</div><div class="lvb"><div class="lf2 low"></div></div><div class="lt low">Baixo</div></div>
+      <div class="sc"><i class="ti ti-sun"></i><div class="scl">Iluminação</div><div class="lvb"><div class="lf2 med"></div></div><div class="lt med">Médio</div></div>
+      <div class="sc"><i class="ti ti-users"></i><div class="scl">Lotação</div><div class="lvb"><div class="lf2 low"></div></div><div class="lt low">Vazio</div></div>
+    </div>
+    <div class="dd">Café aconchegante com música ambiente suave, iluminação regulável e ambiente raramente movimentado. Ideal para pessoas com hipersensibilidade sonora e visual.</div>
+    <div class="tw"><div class="tg">WiFi rápido</div><div class="tg">Espaço pet</div><div class="tg">Acessível</div><div class="tg">Estacionamento</div></div>
+    <button class="btn" style="margin-bottom:14px" onclick="goTo('aval')"><i class="ti ti-star" style="margin-right:6px"></i>Avaliar este local</button>
+    <div class="st" style="margin-bottom:11px">Avaliações recentes</div>
+    <div class="ri"><div class="rit"><div><div class="riu">Mariana C.</div><div class="str"><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i></div></div><div class="rid">há 2 dias</div></div><div class="rix">Ambiente perfeito! Música baixinha, poucas pessoas. Recomendo para quem tem hipersensibilidade.</div></div>
+    <div class="ri"><div class="rit"><div><div class="riu">Pedro L.</div><div class="str"><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star f"></i><i class="ti ti-star"></i></div></div><div class="rid">há 5 dias</div></div><div class="rix">Muito bom durante a semana. Iluminação um pouco forte, mas suportável.</div></div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+<div class="bnav">
+  <div class="ni2" onclick="goTo('home')"><i class="ti ti-home"></i><span>Início</span></div>
+  <div class="ni2" onclick="goTo('home')"><i class="ti ti-map"></i><span>Mapa</span></div>
+  <div class="ni2 act" onclick="goTo('aval')"><i class="ti ti-star"></i><span>Avaliar</span></div>
+  <div class="ni2" onclick="goTo('perfil')"><i class="ti ti-user"></i><span>Perfil</span></div>
+</div>
+</div>
+
+<!-- AVALIAÇÃO -->
+<div class="screen" id="aval">
+<div class="sa">
+  <div class="big-hdr" style="background:linear-gradient(135deg,var(--p4),var(--p1))">
+    <div class="hi-eval">
+      <div class="eht"><div class="mb-back" onclick="goBack()" style="background:rgba(255,255,255,.15)"><i class="ti ti-arrow-left"></i></div><div class="etl">Avaliar local</div></div>
+      <div class="epc"><div class="epci"><i class="ti ti-coffee"></i></div><div><div class="epcn">Café Aconchego</div><div class="epcc">Pinheiros, SP</div></div></div>
+    </div>
+    <div class="mini-bar" style="background:var(--p1)">
+      <div class="mb-back" onclick="goBack()"><i class="ti ti-arrow-left"></i></div>
+      <div class="mb-title">Avaliar local</div>
+    </div>
+  </div>
+  <div class="ebo">
+    <div class="es">
+      <div class="est"><i class="ti ti-star"></i>Avaliação geral</div>
+      <div class="ss" id="ss"><i class="ti ti-star" onclick="selStar(1)"></i><i class="ti ti-star" onclick="selStar(2)"></i><i class="ti ti-star" onclick="selStar(3)"></i><i class="ti ti-star" onclick="selStar(4)"></i><i class="ti ti-star" onclick="selStar(5)"></i></div>
+      <div id="slb" style="text-align:center;font-size:12px;color:var(--muted);font-weight:600;min-height:16px;font-family:var(--fh)"></div>
+    </div>
+    <div class="es">
+      <div class="est"><i class="ti ti-volume"></i>Nível de ruído</div>
+      <div class="ls">
+        <div class="lo" id="rl" onclick="selLv('r','low')"><i class="ti ti-volume-3"></i><span>Baixo</span></div>
+        <div class="lo" id="rm" onclick="selLv('r','med')"><i class="ti ti-volume"></i><span>Médio</span></div>
+        <div class="lo" id="rh" onclick="selLv('r','hi')"><i class="ti ti-volume-2"></i><span>Alto</span></div>
+      </div>
+    </div>
+    <div class="es">
+      <div class="est"><i class="ti ti-sun"></i>Iluminação</div>
+      <div class="ls">
+        <div class="lo" id="il" onclick="selLv('i','low')"><i class="ti ti-brightness-down"></i><span>Baixa</span></div>
+        <div class="lo" id="im" onclick="selLv('i','med')"><i class="ti ti-brightness"></i><span>Média</span></div>
+        <div class="lo" id="ih" onclick="selLv('i','hi')"><i class="ti ti-brightness-up"></i><span>Alta</span></div>
+      </div>
+    </div>
+    <div class="es">
+      <div class="est"><i class="ti ti-users"></i>Lotação</div>
+      <div class="ls">
+        <div class="lo" id="ll" onclick="selLv('l','low')"><i class="ti ti-user"></i><span>Vazio</span></div>
+        <div class="lo" id="lm" onclick="selLv('l','med')"><i class="ti ti-users"></i><span>Moderado</span></div>
+        <div class="lo" id="lh" onclick="selLv('l','hi')"><i class="ti ti-users-group"></i><span>Cheio</span></div>
+      </div>
+    </div>
+    <div class="es">
+      <div class="est"><i class="ti ti-message"></i>Comentário</div>
+      <textarea class="cf" rows="4" placeholder="Conte como foi sua experiência..."></textarea>
+    </div>
+    <button class="btn" onclick="subRev()">Enviar avaliação</button>
+    <div style="height:20px"></div>
+  </div>
+</div>
+<div class="bnav">
+  <div class="ni2" onclick="goTo('home')"><i class="ti ti-home"></i><span>Início</span></div>
+  <div class="ni2" onclick="goTo('home')"><i class="ti ti-map"></i><span>Mapa</span></div>
+  <div class="ni2 act"><i class="ti ti-star"></i><span>Avaliar</span></div>
+  <div class="ni2" onclick="goTo('perfil')"><i class="ti ti-user"></i><span>Perfil</span></div>
+</div>
+</div>
+
+<!-- PERFIL -->
+<div class="screen" id="perfil">
+<div class="sa">
+  <div class="big-hdr" style="background:linear-gradient(135deg,var(--p4),var(--p1))">
+    <div class="hi-profile">
+      <div class="paw"><div class="pav"><i class="ti ti-user"></i></div><div class="peb"><i class="ti ti-pencil"></i></div></div>
+      <div class="pnm" id="pnm">Ana Souza</div>
+      <div class="pem" id="pem">ana@email.com</div>
+      <div class="pbg" id="pbg"><i class="ti ti-user"></i><span>USUÁRIO</span></div>
+    </div>
+    <div class="str2">
+      <div class="sti"><div class="stn">12</div><div class="stl">Avaliações</div></div>
+      <div class="sti"><div class="stn">8</div><div class="stl">Favoritos</div></div>
+      <div class="sti"><div class="stn">34</div><div class="stl">Visitas</div></div>
+    </div>
+    <div class="mini-bar grad-profile">
+      <div class="mb-logo">
+        <div class="mb-icon"><i class="ti ti-map-pin"></i></div>
+        <div class="mb-name">SENSMAP</div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,.55);font-family:var(--fh);font-weight:500" id="mini-profile-name">Perfil</div>
+    </div>
+  </div>
+  <div class="ms">
+    <div class="mst">Minha conta</div>
+    <div class="mi"><div class="mii cy"><i class="ti ti-user-circle"></i></div><div class="mit"><div class="m1">Editar perfil</div><div class="m2">Nome, e-mail, foto</div></div><div class="mia"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="mi"><div class="mii tl"><i class="ti ti-adjustments-horizontal"></i></div><div class="mit"><div class="m1">Preferências sensoriais</div><div class="m2">Ruído, iluminação, lotação</div></div><div class="mia"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="mi"><div class="mii cy"><i class="ti ti-history"></i></div><div class="mit"><div class="m1">Histórico de avaliações</div><div class="m2">12 avaliações feitas</div></div><div class="mia"><i class="ti ti-chevron-right"></i></div></div>
+  </div>
+  <div class="ms" id="adminmenu" style="display:none">
+    <div class="mst">Administração</div>
+    <div class="mi" onclick="goTo('admin')"><div class="mii cy"><i class="ti ti-layout-dashboard"></i></div><div class="mit"><div class="m1">Painel administrativo</div><div class="m2">Gerenciar conteúdo</div></div><div class="mia"><i class="ti ti-chevron-right"></i></div></div>
+  </div>
+  <div class="ms">
+    <div class="mst">Conta</div>
+    <div class="mi"><div class="mii tl"><i class="ti ti-help-circle"></i></div><div class="mit"><div class="m1">Ajuda e suporte</div><div class="m2">FAQ e contato</div></div><div class="mia"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="mi" onclick="sm('mlgt')"><div class="mii rd"><i class="ti ti-logout"></i></div><div class="mit"><div class="m1">Sair da conta</div><div class="m2">Encerrar sessão</div></div><div class="mia"><i class="ti ti-chevron-right"></i></div></div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+<div class="bnav">
+  <div class="ni2" onclick="goTo('home')"><i class="ti ti-home"></i><span>Início</span></div>
+  <div class="ni2" onclick="goTo('home')"><i class="ti ti-map"></i><span>Mapa</span></div>
+  <div class="ni2" onclick="goTo('aval')"><i class="ti ti-star"></i><span>Avaliar</span></div>
+  <div class="ni2 act"><i class="ti ti-user"></i><span>Perfil</span></div>
+</div>
+</div>
+
+<!-- ADMIN -->
+<div class="screen" id="admin">
+<div class="sa">
+  <div class="big-hdr" style="background:linear-gradient(135deg,var(--p4),var(--p1))">
+    <div class="hi-admin">
+      <div class="adht">
+        <div><div class="adtl">Painel Admin</div><div class="adsl">Visão geral do sistema</div></div>
+        <div class="adbg"><i class="ti ti-shield-check" style="font-size:10px;margin-right:2px"></i>Admin</div>
+      </div>
+    </div>
+    <div class="mini-bar" style="background:var(--p1)">
+      <div class="mb-back" onclick="goBack()"><i class="ti ti-arrow-left"></i></div>
+      <div class="mb-title">Painel Admin</div>
+      <div class="adbg" style="font-size:9px;padding:3px 8px">Admin</div>
+    </div>
+  </div>
+  <div class="sg2">
+    <div class="scc"><div class="sci cy"><i class="ti ti-map-pin"></i></div><div class="scin"><div class="sn">142</div><div class="ss2">Locais</div></div></div>
+    <div class="scc"><div class="sci tl"><i class="ti ti-users"></i></div><div class="scin"><div class="sn">1.8k</div><div class="ss2">Usuários</div></div></div>
+    <div class="scc"><div class="sci gn"><i class="ti ti-star"></i></div><div class="scin"><div class="sn">4.2k</div><div class="ss2">Avaliações</div></div></div>
+    <div class="scc"><div class="sci am"><i class="ti ti-alert-triangle"></i></div><div class="scin"><div class="sn">7</div><div class="ss2">Pendentes</div></div></div>
+  </div>
+  <div class="at">
+    <div class="ath"><div class="atl">Relatório sensorial</div><div class="ata">Exportar</div></div>
+    <div style="padding:14px">
+      <div class="cbr"><div class="cbl">Ruído</div><div class="cbw"><div class="cbf" style="width:72%;background:var(--success)"></div></div><div class="cbv">72%</div></div>
+      <div class="cbr"><div class="cbl">Iluminação</div><div class="cbw"><div class="cbf" style="width:58%;background:var(--warning)"></div></div><div class="cbv">58%</div></div>
+      <div class="cbr"><div class="cbl">Lotação</div><div class="cbw"><div class="cbf" style="width:43%"></div></div><div class="cbv">43%</div></div>
+      <div style="font-size:10px;color:var(--lm);margin-top:5px">% de locais com nível baixo/favorável</div>
+    </div>
+  </div>
+  <div class="at">
+    <div class="ath"><div class="atl">Gerenciar locais</div><div class="ata" style="color:var(--p1)">+ Adicionar</div></div>
+    <div class="atr"><div class="atic"><i class="ti ti-coffee"></i></div><div class="ati"><div class="atn">Café Aconchego</div><div class="atm">Pinheiros · 62 avaliações</div></div><div class="atac"><button class="atb ed"><i class="ti ti-pencil"></i></button><button class="atb dl" onclick="sm('mdel')"><i class="ti ti-trash"></i></button></div></div>
+    <div class="atr"><div class="atic"><i class="ti ti-trees"></i></div><div class="ati"><div class="atn">Parque Ibirapuera</div><div class="atm">Vila Mariana · 120 avaliações</div></div><div class="atac"><button class="atb ed"><i class="ti ti-pencil"></i></button><button class="atb dl" onclick="sm('mdel')"><i class="ti ti-trash"></i></button></div></div>
+    <div class="atr"><div class="atic"><i class="ti ti-book"></i></div><div class="ati"><div class="atn">Biblioteca Mário de Andrade</div><div class="atm">Centro · 48 avaliações</div></div><div class="atac"><button class="atb ed"><i class="ti ti-pencil"></i></button><button class="atb dl" onclick="sm('mdel')"><i class="ti ti-trash"></i></button></div></div>
+  </div>
+  <div class="at">
+    <div class="ath"><div class="atl">Avaliações pendentes</div><div class="ata">Ver todas</div></div>
+    <div class="atr"><div class="atic"><i class="ti ti-message"></i></div><div class="ati"><div class="atn">Avaliação de Pedro L.</div><div class="atm">Coffee Lab · inconsistência detectada</div></div><div class="atac"><button class="atb ed"><i class="ti ti-check"></i></button><button class="atb dl" onclick="sm('mdel')"><i class="ti ti-x"></i></button></div></div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+<div class="bnav">
+  <div class="ni2" onclick="goTo('home')"><i class="ti ti-home"></i><span>Início</span></div>
+  <div class="ni2 act"><i class="ti ti-layout-dashboard"></i><span>Admin</span></div>
+  <div class="ni2" onclick="goTo('aval')"><i class="ti ti-star"></i><span>Avaliar</span></div>
+  <div class="ni2" onclick="goTo('perfil')"><i class="ti ti-user"></i><span>Perfil</span></div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div class="mo" id="mfgt"><div class="md">
+  <div class="mdi wn"><i class="ti ti-mail"></i></div>
+  <div class="mdt">Recuperar senha</div>
+  <div class="mdd">Digite seu e-mail para receber instruções de redefinição.</div>
+  <div class="fw" style="margin-bottom:16px"><i class="ti ti-mail fi2"></i><input class="fi" type="email" placeholder="seu@email.com"></div>
+  <div class="mac"><button class="btn sec" onclick="cm('mfgt')">Cancelar</button><button class="btn" onclick="cm('mfgt')">Enviar</button></div>
+</div></div>
+<div class="mo" id="mrev"><div class="md">
+  <div class="mdi sc"><i class="ti ti-circle-check"></i></div>
+  <div class="mdt">Avaliação enviada!</div>
+  <div class="mdd">Obrigado por contribuir com a comunidade SensMap. Sua avaliação ajuda pessoas com hipersensibilidade sensorial.</div>
+  <div class="mac"><button class="btn" onclick="cm('mrev');goTo('home')">Voltar ao início</button></div>
+</div></div>
+<div class="mo" id="mdel"><div class="md">
+  <div class="mdi dg"><i class="ti ti-trash"></i></div>
+  <div class="mdt">Confirmar exclusão</div>
+  <div class="mdd">Tem certeza que deseja remover este item? Esta ação não pode ser desfeita.</div>
+  <div class="mac"><button class="btn sec" onclick="cm('mdel')">Cancelar</button><button class="btn dng" onclick="cm('mdel')">Excluir</button></div>
+</div></div>
+<div class="mo" id="mlgt"><div class="md">
+  <div class="mdi wn"><i class="ti ti-logout"></i></div>
+  <div class="mdt">Sair da conta</div>
+  <div class="mdd">Tem certeza que deseja encerrar sua sessão no SensMap?</div>
+  <div class="mac"><button class="btn sec" onclick="cm('mlgt')">Cancelar</button><button class="btn" onclick="cm('mlgt');goTo('login')">Sair</button></div>
+</div></div>
+
+</div>
+<script>
+let cur='splash',hist=[],cUser=null,cRole='user',starV=0;
+const users={'admin@sensmap.com':{pwd:'admin123',role:'admin',name:'Admin SensMap'},'user@sensmap.com':{pwd:'user123',role:'user',name:'Ana Souza'}};
+function goTo(id){
+  const c=document.getElementById(cur),n=document.getElementById(id);
+  if(!n)return;
+  if(c)c.classList.remove('active');
+  n.classList.add('active');
+  // reset scroll on each screen change
+  const sa=n.querySelector('.sa');
+  if(sa)sa.scrollTop=0;
+  hist.push(cur);cur=id;
+  if(id==='home'){const h=new Date().getHours();const t=document.getElementById('htime');if(t)t.textContent=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';}
+}
+function goBack(){if(!hist.length)return;const p=hist.pop(),c=document.getElementById(cur),n=document.getElementById(p);if(c)c.classList.remove('active');if(n){n.classList.add('active');cur=p;}}
+function sm(id){document.getElementById(id).classList.add('op')}
+function cm(id){document.getElementById(id).classList.remove('op')}
+function selRole(r){cRole=r;document.getElementById('ru').className='rc'+(r==='user'?' sel':'');document.getElementById('ra').className='rc'+(r==='admin'?' sel':'');}
+function vEmail(){const v=document.getElementById('cemail').value,ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),f=document.getElementById('cemail'),e=document.getElementById('eemail'),o=document.getElementById('oemail');if(!v.length){f.className='fi';e.className='fe';o.className='fok';return;}f.className='fi '+(ok?'ok':'er');e.className='fe'+(ok?'':' sh');o.className='fok'+(ok?' sh':'');}
+function vPwd(){const v=document.getElementById('cpwd').value;let s=0;if(v.length>=8)s++;if(/[A-Z]/.test(v))s++;if(/[0-9]/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;const cs=['var(--border)','var(--danger)','var(--warning)','var(--p2)','var(--success)'];['pb1','pb2','pb3','pb4'].forEach((id,i)=>{document.getElementById(id).style.background=i<s?cs[s]:'var(--border)';});}
+function vPwd2(){const p1=document.getElementById('cpwd').value,p2=document.getElementById('cpwd2').value,f=document.getElementById('cpwd2'),e=document.getElementById('epwd2'),o=document.getElementById('opwd2');if(!p2.length){f.className='fi';e.className='fe';o.className='fok';return;}const ok=p1===p2;f.className='fi '+(ok?'ok':'er');e.className='fe'+(ok?'':' sh');o.className='fok'+(ok?' sh':'');}
+function doLogin(){const email=document.getElementById('lemail').value.trim(),pwd=document.getElementById('lpwd').value,e=document.getElementById('lerr');e.className='eb';if(!email||!pwd){e.className='eb sh';return;}const lo=document.getElementById('lload');lo.className='lov sh';setTimeout(()=>{lo.className='lov';const u=users[email];if(u&&u.pwd===pwd){cUser={email,role:u.role,name:u.name};setProfile(u);goTo('home');}else{e.className='eb sh';}},1100);}
+function doCad(){const name=document.getElementById('cname').value.trim(),email=document.getElementById('cemail').value.trim(),pwd=document.getElementById('cpwd').value,pwd2=document.getElementById('cpwd2').value;let ok=true;document.getElementById('ename').className='fe'+(name?'':' sh');if(!name)ok=false;const ev=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);document.getElementById('eemail').className='fe'+(ev?'':' sh');if(!ev)ok=false;document.getElementById('epwd').className='fe'+(pwd.length>=8?'':' sh');if(pwd.length<8)ok=false;document.getElementById('epwd2').className='fe'+(pwd===pwd2?'':' sh');if(pwd!==pwd2)ok=false;if(!ok)return;const lo=document.getElementById('cload');lo.className='lov sh';setTimeout(()=>{lo.className='lov';cUser={email,role:cRole,name};goTo('onboarding');},1100);}
+function togPerm(id){if(id==='loc')return;const t=document.getElementById('tog-'+id),p=document.getElementById('pc-'+id);const on=t.classList.contains('on');t.className='tog '+(on?'off':'on');p.className='pcard'+(on?'':' on');}
+function selSens(type,level){const ids={n:['sn-low','sn-med','sn-hi'],i:['si-low','si-med','si-hi'],l:['sl-low','sl-med','sl-hi']};ids[type].forEach(id=>{document.getElementById(id).className='topt'+(id.endsWith(level)?(' act'):'');});}
+function finishOnboarding(){cUser.role=cRole;setProfile({role:cRole,name:cUser.name});goTo('home');}
+function setProfile(u){const n=u.name||cUser.name;document.getElementById('huname').textContent=(n.split(' ')[0])+' 👋';document.getElementById('pnm').textContent=n;document.getElementById('pem').textContent=cUser&&cUser.email||'';const mn=document.getElementById('mini-profile-name');if(mn)mn.textContent=n.split(' ')[0];const b=document.getElementById('pbg');const am=document.getElementById('adminmenu');if(u.role==='admin'){b.innerHTML='<i class="ti ti-shield-check"></i><span>ADMINISTRADOR</span>';am.style.display='block';}else{b.innerHTML='<i class="ti ti-user"></i><span>USUÁRIO</span>';am.style.display='none';}}
+function selStar(n){starV=n;const ls=['','Péssimo','Ruim','Regular','Bom','Excelente'];document.querySelectorAll('#ss i').forEach((s,i)=>s.className='ti ti-star'+(i<n?' sel':''));document.getElementById('slb').textContent=ls[n];}
+function selLv(t,l){const pfx={r:['rl','rm','rh'],i:['il','im','ih'],l:['ll','lm','lh']};pfx[t].forEach((id,i)=>{const lv=['low','med','hi'][i];document.getElementById(id).className='lo'+(l===lv?' sl-'+lv:'');});}
+function subRev(){sm('mrev');}
+setTimeout(()=>{goTo('login');},2100);
+</script>
+</body>
+</html>
